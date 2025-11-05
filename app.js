@@ -1,41 +1,34 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+const app = express();
 
-var app = express();
+//setup dotenv and url parser
+dotenv.config();
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
-
-app.use(logger('dev'));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(cors());
+const port = process.env.PORT;
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+// handle the connection to mongo db
+(async function mongo_conn() {
+  try {
+    const mongo_url = process.env.MONGO_URL ;
+    if(!mongo_url){
+      console.log("Mongo url is invalid or missing");
+      return;
+    }
+    await mongoose.connect(mongo_url)
+    console.log("connected to mongo...");
+  } catch (error) {
+    console.error(`Failed to connect to mongo db :${error.message}`);
+  } 
+})()
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
-});
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+// start the app
+app.listen(port , ()=> console.log("Listening on port 5000..."));
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
-
-module.exports = app;
+export default app;
